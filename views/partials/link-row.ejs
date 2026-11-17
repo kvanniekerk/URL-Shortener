@@ -1,0 +1,6 @@
+<tr data-code="<%= link.code %>">
+    <td><a class="mono" data-field="shortLabel" data-href="shortUrl" href="<%= link.shortUrl %>" title="<%= link.shortUrl %>" target="_blank" rel="noopener"><%= link.shortUrl.replace(/^https?:\/\//, '') %></a></td>
+    <td class="col-original"><a class="truncate" data-field="originalUrl" href="<%= link.originalUrl %>" title="<%= link.originalUrl %>" target="_blank" rel="noopener noreferrer"><%= link.originalUrl %></a></td>
+    <td class="num" data-field="visitsCount"><%= link.visits %></td>
+    <td class="actions"><button type="button" class="btn btn-ghost btn-sm" data-copy="<%= link.shortUrl %>">Copy</button></td>
+</tr>

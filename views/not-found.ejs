@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('partials/head', { title: 'Link not found · URL Shortener' }) %>
+</head>
+<body>
+<div class="page">
+    <%- include('partials/brand') %>
+    <main>
+        <section class="card not-found">
+            <p class="eyebrow">404</p>
+            <h1>That link doesn't exist</h1>
+            <p class="muted">The short link may have been mistyped, or it was never created.</p>
+            <a class="btn btn-primary" href="/">Shorten a new link</a>
+        </section>
+    </main>
+</div>
+</body>
+</html>

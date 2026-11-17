@@ -1,26 +1,37 @@
 {
-  "name": "assignmentt-ufzmks",
+  "name": "url-shortener",
   "version": "1.0.0",
-  "description": "URL Shortener built in Node, using Express framework",
-  "main": "index.js",
+  "description": "A URL shortener with a REST API and web UI, built with Node.js, Express and SQLite",
+  "main": "server.js",
   "scripts": {
-    "start": "node app.js",
-    "test": "node --test test.js"
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test test/"
   },
   "repository": {
     "type": "git",
-    "url": "http://instasense-1-jxytrg@git.codesubmit.io/instasense-1/assignmentt-ufzmks"
+    "url": "git+https://github.com/kvanniekerk/URL-Shortener.git"
   },
   "author": "Kyle van Niekerk",
-  "license": "ISC",
+  "license": "UNLICENSED",
   "dependencies": {
-    "body-parser": "^1.20.1",
+    "better-sqlite3": "^11.10.0",
     "dotenv": "^16.0.3",
     "ejs": "^3.1.8",
-    "express": "^4.18.2",
-    "url": "^0.11.0"
+    "express": "^4.18.2"
   },
   "devDependencies": {
     "supertest": "^7.2.2"
-  }
+  },
+  "homepage": "https://github.com/kvanniekerk/URL-Shortener#readme",
+  "keywords": [
+    "url-shortener",
+    "rest-api",
+    "express",
+    "sqlite"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "private": true
 }

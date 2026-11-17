@@ -1,0 +1,12 @@
+<div class="result">
+    <p class="result-label" data-field="label"><%= label %></p>
+    <div class="result-main">
+        <a class="result-short mono" data-field="shortUrl" href="<%= link.shortUrl %>" target="_blank" rel="noopener"><%= link.shortUrl %></a>
+        <button type="button" class="btn btn-primary btn-sm" data-copy="<%= link.shortUrl %>">Copy</button>
+    </div>
+    <p class="result-meta">
+        <span class="result-arrow" aria-hidden="true">↳</span>
+        <a class="truncate" data-field="originalUrl" href="<%= link.originalUrl %>" title="<%= link.originalUrl %>" target="_blank" rel="noopener noreferrer"><%= link.originalUrl %></a>
+        <span class="pill" data-field="visits"><%= link.visits === 1 ? '1 click' : `${link.visits} clicks` %></span>
+    </p>
+</div>
