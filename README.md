@@ -1,129 +1,131 @@
 # URL Shortener
 
-A simple Node.js REST API and web UI for shortening URLs. Demonstrates REST API design, Express.js, and basic frontend integration.
+[![CI](https://github.com/kvanniekerk/URL-Shortener/actions/workflows/ci.yml/badge.svg)](https://github.com/kvanniekerk/URL-Shortener/actions/workflows/ci.yml)
+
+A URL shortener with a JSON REST API and a web UI, built with **Node.js**, **Express** and **SQLite**.
+
+![Screenshot of the web UI](docs/screenshot.png)
 
 ## Features
-- Shorten (encode) any valid URL to a short link
-- Decode a short link back to the original URL
-- Simple web interface (EJS + Bootstrap)
-- In-memory storage (no database required)
-- REST API for programmatic access
 
-## Getting Started
+- **REST API** to create, look up and list short links ([OpenAPI spec](public/openapi.yaml))
+- **Redirects** from `/:code` to the original URL, with a visit counter
+- **Persistent storage** in SQLite (`better-sqlite3`)
+- **Safe input handling**: only `http`/`https` URLs are accepted (no `javascript:` or `data:` links), with a length limit and consistent JSON errors
+- **De-duplication**: shortening the same URL twice returns the existing link
+- **Web UI** that works without JavaScript and is upgraded to use the API with `fetch` when JavaScript is available; responsive, with light and dark modes
+- **Tests** using Node's built-in test runner and Supertest, run in CI on every push
 
-## Step 1: Install Node.js dependencies
-Open the project folder and run the command 
-```js
+## Getting started
+
+Requires Node.js 20 or later.
+
+```bash
 npm install
-``` 
-This will download and intall all the required dependencies necessary to run the app.
-
-## Step 2: Starting the app 
-The app can be started through any terminal run inside the project folder (where app.js is located) by running the command 
-```js
-npm start
-``` 
-
-You should then be met with a confirmation that the app has started along with which port it is listening on as well as a link which can be used to access the frontend UI, http://localhost:3000/  by default.
-To access the frontend UI, open the link in your browser.
-
-## Step 3: Using the frontend UI
-
-After opening the given link in your browser (http://localhost:3000/ by default) you will be sent to the app's frontend GUI page.
-
-### Encoding a URL:
-
-Any URL can simply be entered in the "Encode a full-length URL" field. This input box will only accept a valid URL, not null or string values in other formats. This is validated when clicking the respective submit buttons next to each input field. When the "Shorten URL" submit button is clicked, the URL will be encoded at the app's /encode endpoint at http://localhost:3000/encode and the resulting encoded URL will be returned as a JSON object. This is also logged in the app's terminal. This shows how many URLs have been encoded and displays both the original and encoded versions as they are stored in memory. The original website can now be accessed through the encoded URL as well as the original through your browser. For convenience and better visualization, every URL as well as its encoded version is displayed in the GUI frontend in a table after at least one URL has been successfully encoded as hyperlinks, allowing the user to see and test the results for themselves. Both encoded and original URLs will take the user to the website of the original full-length URL. This table will grow with every new encoded URL automatically.
-
-### Decoding a URL:
-
-When returning to the GUI page at http://localhost:3000/ you will now be able to decode the newly encoded URL, as it now exists in memory and is associated with its original full-length URL. This will return the original full URL as a JSON when the "Get full URL" button is clicked from the /decode endpoint at http://localhost:3000/decode. This is also accompanied with a confirmation of the successful decoding of the encoded URL.
-
-# API Testing:
-# API Testing:
-Automated API tests run directly against the Express app in-process, so you do not need to start the app separately.
-
-## API Usage and Examples
-
-The API exposes two main endpoints for encoding and decoding URLs. You can interact with these endpoints using tools like [Postman](https://www.postman.com/) or `curl`.
-
-### 1. Encode a URL
-
-**Endpoint:** `POST /encode`
-
-**Body (x-www-form-urlencoded):**
-```
-full=https://example.com
+npm start          # or: npm run dev  (restarts on file changes)
 ```
 
-**Example using Postman:**
-1. Set method to `POST` and URL to `http://localhost:3000/encode`
-2. In the Body tab, select `x-www-form-urlencoded`
-3. Add a key `full` with value `https://example.com`
-4. Click Send
+Open <http://localhost:3000>.
 
-**Response:**
+### Configuration
+
+Copy `.env.example` to `.env` to override the defaults:
+
+| Variable        | Default           | Description                                                                 |
+| --------------- | ----------------- | --------------------------------------------------------------------------- |
+| `PORT`          | `3000`            | Port to listen on                                                           |
+| `BASE_URL`      | request origin    | Public origin used for short links, e.g. `https://sho.rt`                   |
+| `DATABASE_PATH` | `./data/urls.db`  | SQLite database file                                                        |
+| `TRUST_PROXY`   | unset             | Set (e.g. `1`) behind a reverse proxy so `X-Forwarded-Proto` is respected   |
+
+### Docker
+
+```bash
+docker build -t url-shortener .
+docker run -p 3000:3000 -v url-data:/app/data url-shortener
 ```
+
+## API
+
+All API responses are JSON. Request bodies may be JSON or form-encoded.
+The full specification is in [`public/openapi.yaml`](public/openapi.yaml) (also served at `/openapi.yaml`).
+
+| Method | Path               | Description                                   | Success          |
+| ------ | ------------------ | --------------------------------------------- | ---------------- |
+| `POST` | `/api/urls`        | Create a short link                           | `201` (or `200` if it already exists) |
+| `GET`  | `/api/urls`        | List recent links (`?limit=1..100`, default 20) | `200`          |
+| `GET`  | `/api/urls/:code`  | Look up a link by its code                    | `200`            |
+| `GET`  | `/:code`           | Redirect to the original URL                  | `302`            |
+
+### Create a short link
+
+```bash
+curl -i -X POST http://localhost:3000/api/urls \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com/some/long/path"}'
+```
+
+```http
+HTTP/1.1 201 Created
+Location: /api/urls/aB3dE9x
+Content-Type: application/json; charset=utf-8
+
 {
-	"Shortened URL": "http://localhost:3000/abc123"
+  "code": "aB3dE9x",
+  "shortUrl": "http://localhost:3000/aB3dE9x",
+  "originalUrl": "https://example.com/some/long/path",
+  "createdAt": "2026-01-01T12:00:00.000Z",
+  "visits": 0
 }
 ```
 
-### 2. Decode a Shortened URL
+### Look up a short link
 
-**Endpoint:** `POST /decode`
-
-**Body (x-www-form-urlencoded):**
-```
-short=http://localhost:3000/abc123
+```bash
+curl http://localhost:3000/api/urls/aB3dE9x
 ```
 
-**Example using Postman:**
-1. Set method to `POST` and URL to `http://localhost:3000/decode`
-2. In the Body tab, select `x-www-form-urlencoded`
-3. Add a key `short` with the shortened URL you received earlier
-4. Click Send
+Returns the same shape as above.
 
-**Response:**
-```
-{
-	"Original URL": "https://example.com"
-}
+### Errors
+
+Errors use a consistent shape and an appropriate status code:
+
+```json
+{ "error": { "code": "invalid_url", "message": "Please provide a valid http(s) URL (max 2048 characters)." } }
 ```
 
-### 3. Error Handling Example
+| Status | `code`              | When                                         |
+| ------ | ------------------- | -------------------------------------------- |
+| `400`  | `invalid_body`      | Request body is not valid JSON               |
+| `404`  | `not_found`         | Unknown code or API route                    |
+| `413`  | `payload_too_large` | Request body larger than 10 KB               |
+| `422`  | `invalid_url`       | Missing, malformed, non-http(s) or self-referencing URL |
 
-If you try to decode a URL that does not exist, you will get a 404 response:
+### Design notes
+
+- **Codes** are 7 characters from `[A-Za-z0-9]`, generated with `crypto.randomInt` (about 3.5 trillion possibilities). Collisions are caught by the database primary key and retried.
+- **302, not 301**: browsers cache permanent redirects, which would skip the server and stop visits from being counted.
+- **Short link host** comes from `BASE_URL` if set, otherwise from the incoming request, so links work wherever the app is deployed.
+
+## Project structure
+
 ```
-{
-	"error": "Shortened URL not found."
-}
+server.js            Entry point: config, start-up, graceful shutdown
+src/app.js           Express app: API routes, UI routes, redirects, error handling
+src/store.js         SQLite storage
+src/codes.js         Short code generation and validation
+src/validate.js      URL validation
+views/               EJS templates (page, 404 and shared partials)
+public/              Static assets: CSS, client-side JS, favicon, OpenAPI spec
+test/                API and UI tests
 ```
 
----
+## Tests
 
-You can also use `curl` for quick testing:
-
-**Encode:**
-```
-curl -X POST -d "full=https://example.com" http://localhost:3000/encode
-```
-
-**Decode:**
-```
-curl -X POST -d "short=http://localhost:3000/abc123" http://localhost:3000/decode
-```
-
-## API Test
-An automated version of the above tests can be run through the terminal by using the following command in the main project folder where app.js is located:
-```js
+```bash
 npm test
 ```
-This runs the Node.js test runner and validates success and error behavior across /encode, /decode, and short-link redirect routes.
 
-## Test Case:
-| Test Case ID | Description                                                                                                             | Test Data                                    | Expected Result                                        | Actual Result                                          | Pass/Fail |
-|--------------|-------------------------------------------------------------------------------------------------------------------------|----------------------------------------------|--------------------------------------------------------|--------------------------------------------------------|-----------|
-| TC1          | 1. Go to http://localhost:3000<br>2. Enter a URL to be encoded<br>3. Click the "Shorten URL" button                     | {full:"https://codesubmit.io/library/react"} | {"Shotened URL: http://localhost:3000/stC241"}         | {"Shotened URL: http://localhost:3000/stC241"}         | Pass      |
-| TC2          | 1. Go to http://localhost:3000<br>2. Enter a shortened URL to be decoded<br>3. Click the "Get full URL" button          | {short:"http://localhost:3000/stC241"}       | {"Original URL":"https://codesubmit.io/library/react"} | {"Original URL":"https://codesubmit.io/library/react"} | Pass      |
-| TC3          | 1. Go to http://localhost:3000<br>2. Enter an invalid shortened URL to be decoded<br>3. Click the "Get full URL" button | {short:"http://localhost:3000/*invalid*"}    | {"Original URL": "404 not found"}                      | {"Original URL": "404 not found"}                      | Pass      |
+Tests run against the Express app in-process with an in-memory SQLite database, so there's no need to start the server first.
+
